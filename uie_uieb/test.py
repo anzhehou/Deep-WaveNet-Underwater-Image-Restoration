@@ -14,18 +14,17 @@ import torchvision.transforms as T
 from options import opt
 import argparse
 
-# 設置路徑
-CHECKPOINTS_DIR = opt.checkpoints_dir  # 檢查點目錄，例如 '/content/Deep-WaveNet-Underwater-Image-Restoration/checkpoints'
-INP_DIR = 'uie_uieb/sample'  # 修改為您的圖像目錄
+
+CHECKPOINTS_DIR = opt.checkpoints_dir  
+INP_DIR = 'uie_uieb\sample'  # 修改為您的圖像目錄
 RESULT_DIR = 'uie_uieb\result'  # 輸出目錄
 
-# 設置設備
+
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
-# 允許 argparse.Namespace 以修復 weights_only=True 錯誤
+
 torch.serialization.add_safe_globals([argparse.Namespace])
 
-# 初始化模型
 network = CC_Module()
 try:
     checkpoint = torch.load(os.path.join(CHECKPOINTS_DIR, "netG_295.pt"), weights_only=True)
@@ -35,16 +34,16 @@ except KeyError:
 network.eval()
 network.to(device)
 
-# 創建輸出目錄
+
 if not os.path.exists(RESULT_DIR):
     os.makedirs(RESULT_DIR)
 
-# 定義測試數據集
+
 class TestDataset(Dataset):
     def __init__(self, image_dir, transform=None, valid_extensions=('.jpg', '.png')):
         self.image_dir = image_dir
         self.transform = transform
-        # 支援自訂圖像擴展名
+        
         self.images = [f for f in os.listdir(image_dir) if f.lower().endswith(valid_extensions)]
 
     def __len__(self):
