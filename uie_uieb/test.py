@@ -13,21 +13,25 @@ from tqdm import tqdm
 import torchvision.transforms as T
 from options import opt
 import argparse
+import os
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
 
 CHECKPOINTS_DIR = opt.checkpoints_dir  
-INP_DIR = 'uie_uieb\sample'  # 修改為您的圖像目錄
-RESULT_DIR = 'uie_uieb\result'  # 輸出目錄
-
+INP_DIR = r"E:\seagrass_training\unet-pytorch-main\VOCdevkit\VOC2007\JPEGImagess"     # 修改為您的圖像目錄
+RESULT_DIR = r"E:\seagrass_training\unet-pytorch-main\VOCdevkit\VOC2007\JPEGImages"   # 輸出目錄
+model_path = r"E:\seagrass_training\Deep-WaveNet-Underwater-Image-Restoration\uie_uieb\ckpts\netG_295.pt"
 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+print(device)
 
+checkpoint = torch.load(model_path)
 
 torch.serialization.add_safe_globals([argparse.Namespace])
 
 network = CC_Module()
 try:
-    checkpoint = torch.load(os.path.join(CHECKPOINTS_DIR, "netG_295.pt"), weights_only=True)
+    checkpoint = torch.load(model_path, weights_only=True)
     network.load_state_dict(checkpoint['model_state_dict'])
 except KeyError:
     network.load_state_dict(checkpoint)
@@ -79,7 +83,6 @@ if __name__ == '__main__':
 
     # 記錄開始時間
     start_time = time.time()
-
     # 使用 tqdm 追蹤進度
     with tqdm(total=len(test_dataset)) as t:
         for batch in test_loader:
@@ -88,6 +91,9 @@ if __name__ == '__main__':
 
             # 獲取圖像尺寸
             h, w = img.shape[2], img.shape[3]
+
+            if(h > 1080 or w > 1920):
+                img = F.interpolate(img, size=(1080, 1920), mode= 'bilinear', align_corners=False)
 
             # 模型推理
             with torch.no_grad():
@@ -109,4 +115,5 @@ if __name__ == '__main__':
     total_time = end_time - start_time
     print(f'總耗時（秒）：{total_time}')
     print(f'每張圖像平均耗時（秒）：{total_time / len(test_dataset)}')
+
 
